@@ -6,6 +6,9 @@
 #define RETURN_CODE_SUCCESS 0
 #define RETURN_CODE_NULL    -1
 
+#define DATE                2
+#define CLASS_TIME          4
+#define CLASS_LAB           5
 #define DATA_LINE_LENGTH    25
 #define BIG_CLASS_NUM_MAX   30
 
@@ -23,8 +26,8 @@ typedef struct SmallCls{
     int priority;
     int student_num;
     int is_arranged;
-    int x;  //id of lab
-    int y;  //id of time
+    int x;  //id of time
+    int y;  //id of lab
 }scls;
 
 typedef struct node{
@@ -47,7 +50,7 @@ int find_min_num(scls_list head);
 int scls_list_sum(scls_list head);
 void print_list_info(scls_list head);
 
-const int TimeLab[4][5] = 
+const int TimeLab[CLASS_TIME][CLASS_LAB] = 
 {
     {113, 99, 99, 99, 60},
     {113, 99, 99, 99, 60},
@@ -178,67 +181,69 @@ int string2int(char *str){
 
 
 void arrange_handle(scls_list *bcls_arr){
-    int i, j;
+    int i, j, d;
     int k = 0;
     int min_num = INIT_NUMBER;
     int sum_tmp = 0;
 
     scls_list head = bcls_arr[0];
     scls_list origin_head = head;
-    for(i=0; i<4; i++){
-        for(j=0; j<5; j++){
+    for(d=0; d<DATE; d++){
+        for(i=0; i<CLASS_TIME; i++){
+            for(j=0; j<CLASS_LAB; j++){
 
-            printf("i=%d, j=%d\n", i, j);
-            printf("pid:%d\n", head->data->pid);
+                printf("i=%d, j=%d\n", i, j);
+                printf("pid:%d\n", head->data->pid);
 
-            curr_totalw = TimeLab[i][j];
-            restw = curr_totalw;
-            bestw = INIT_NUMBER + 1;
-            currw = INIT_NUMBER + 1;
-            //如果实验室能够容纳当前大班剩余所有人
-            //则不进行递归回溯，直接将所有小班级所有人全部安排在此实验室
-            sum_tmp = scls_list_sum(head);    
-            if(sum_tmp <= curr_totalw){
-                do{
-                    set_sclslist_all_arranged(head);
-                    set_time_lab(origin_head, i, j);
-                    curr_totalw -= sum_tmp;
-                    restw = curr_totalw;
+                curr_totalw = TimeLab[i][j];
+                restw = curr_totalw;
+                bestw = INIT_NUMBER + 1;
+                currw = INIT_NUMBER + 1;
+                //如果实验室能够容纳当前大班剩余所有人
+                //则不进行递归回溯，直接将所有小班级所有人全部安排在此实验室
+                sum_tmp = scls_list_sum(head);    
+                if(sum_tmp <= curr_totalw){
+                    do{
+                        set_sclslist_all_arranged(head);
+                        set_time_lab(origin_head, i, j);
+                        curr_totalw -= sum_tmp;
+                        restw = curr_totalw;
 
+                        k++;
+                        head = bcls_arr[k];
+                        origin_head = head;
+                        sum_tmp = scls_list_sum(head);        
+                    }while(sum_tmp <= curr_totalw);
+                }
+
+                if(head != NULL){
+                    backtrace(head);
+                    head = renew_list_sequence(head);
+                }
+                set_time_lab(origin_head, i, j);
+                //test
+
+                print_list_info(origin_head);
+                printf("==========================================================\n");
+
+                while(flag_all_isarranged == FLAG_LIST_ALL_ARRANGED){
                     k++;
                     head = bcls_arr[k];
                     origin_head = head;
-                    sum_tmp = scls_list_sum(head);        
-                }while(sum_tmp <= curr_totalw);
-            }
-            
-            if(head != NULL){
-                backtrace(head);
-                head = renew_list_sequence(head);
-            }
-            set_time_lab(origin_head, i, j);
-            //test
+                    flag_all_isarranged = FLAG_LIST_ALL_NOT_ARRANGED;
 
-            print_list_info(origin_head);
-            printf("==========================================================\n");
-
-            while(flag_all_isarranged == FLAG_LIST_ALL_ARRANGED){
-                k++;
-                head = bcls_arr[k];
-                origin_head = head;
-                flag_all_isarranged = FLAG_LIST_ALL_NOT_ARRANGED;
-
-                min_num =  find_min_num(head);
-                if(restw >= min_num){                       //*****************大于最小的班级人数************//
-                    curr_totalw = restw;
-                    bestw = INIT_NUMBER + 1;
-                    currw = INIT_NUMBER + 1;
-                    backtrace(head);
-                    head = renew_list_sequence(head);
-                    set_time_lab(origin_head, i, j);
+                    min_num =  find_min_num(head);
+                    if(restw >= min_num){                       //*****************大于最小的班级人数************//
+                        curr_totalw = restw;
+                        bestw = INIT_NUMBER + 1;
+                        currw = INIT_NUMBER + 1;
+                        backtrace(head);
+                        head = renew_list_sequence(head);
+                        set_time_lab(origin_head, i, j);
+                    }
                 }
-            }
 
+            }
         }
     }
 }
